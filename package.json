@@ -1,0 +1,15 @@
+{
+  "name": "far-from-road",
+  "description": "Find the furthest away spot from any paved road in a geographic area",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GregoireDelannoy/far-from-road.git"
+  },
+  "author": "Grégoire Delannoy",
+  "dependencies": {
+    "pg": "",
+    "canvas": ""
+  }
+}
