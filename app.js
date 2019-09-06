@@ -49,6 +49,7 @@ app.get('/roads', (req, res) => {
   Model.get(bbox, function(res){
     grid = Grid.fillRoads(grid, res)
     Draw.toPng(grid, "test.png")
+    Draw.toGif(grid, "test.gif")
   })
   res.send('Hello World!')
 })

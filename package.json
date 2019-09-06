@@ -9,7 +9,8 @@
   },
   "author": "Grégoire Delannoy",
   "dependencies": {
+    "express": "",
     "pg": "",
-    "canvas": ""
+    "pngjs": ""
   }
 }

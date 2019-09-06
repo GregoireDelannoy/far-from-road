@@ -4,12 +4,12 @@ const Model = require('./model.js')
 
 const STATIC_BBOX = {
   lat: {
-    min: 5.95,
-    max: 6.4
+    min: 45,
+    max: 45.5
   },
   long: {
-    min: 45.15,
-    max: 45.4
+    min: 6,
+    max: 6.5
   }
 }
 
