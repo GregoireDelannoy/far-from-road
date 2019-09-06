@@ -1,4 +1,4 @@
-const drawgrid = require('./drawGridBench.js')
+const drawgrid = require('./drawGrid.js')
 
 const DIMENSIONS = {
   x: 1024,
@@ -42,5 +42,22 @@ function fillGridBooleans(){
 
 var grid = null
 timer('grid creation', (f => {grid = fillGridBooleans()}))
-timer('PNG creation', (f => {drawgrid.toPng(grid, 'test.png')}))
-timer('GIF creation', (f => {drawgrid.toGif(grid, 'test.gif')}))
+//timer('PNG creation', (f => {drawgrid.toPng(grid, 'test.png')}))
+timer('GIF creation', (f => {
+  var streamArray = drawgrid.toArrayBuffer(grid)
+  var arrayRes = []
+  streamArray.forEach(s => {
+    var chunks = []
+    console.log("registering ondata")
+    s.on('data', function(d){
+      chunks.push(d)
+    })
+    s.on('end', function(){
+      var res = Buffer.concat(chunks)
+      arrayRes.push(res.toString('base64'))
+      if(arrayRes.length == streamArray.length){
+        console.log('All done!')
+      }
+    })
+  })
+}))

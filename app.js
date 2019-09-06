@@ -46,12 +46,27 @@ app.get('/roads', (req, res) => {
 
   var grid = Grid.generate(bbox)
 
-  Model.get(bbox, function(res){
-    grid = Grid.fillRoads(grid, res)
-    Draw.toPng(grid, "test.png")
-    Draw.toGif(grid, "test.gif")
+  Model.get(bbox, function(dbData){
+    grid = Grid.fillRoads(grid, dbData)
+    var streamArray = Draw.toArrayBuffer(grid)
+    var arrayRes = []
+    streamArray.forEach(s => {
+      var chunks = []
+      s.on('data', function(d){
+        chunks.push(d)
+      })
+      s.on('end', function(){
+        arrayRes.push(Buffer.concat(chunks).toString('base64'))
+        console.log(`Got end event on one of streams. Progress: ${arrayRes.length}/${streamArray.length}`)
+        if(arrayRes.length == streamArray.length){
+          res.json({
+            pngData: arrayRes,
+            farAwayLocation: {},
+          })
+        }
+      })
+    })
   })
-  res.send('Hello World!')
 })
 
 app.use(express.static('public'))

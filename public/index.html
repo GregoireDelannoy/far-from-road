@@ -15,23 +15,26 @@
             padding: 0;
             margin: 0;
         }
-        html, body {
-            height: 100%;
-            width: 100%;
+        .container{
+            display: flex;
+            height: 600px;
         }
-
-        #map {
-          height: 90%;
-          width: 100%;
+        .fixed{
+            width: 600px;
         }
-
+        .flex-item{
+            flex-grow: 1;
+        }
         #button {
           text-align: center;
         }
     </style>
 </head>
 <body>
-  <div id="map"></div>
+  <div class="container">
+    <div class="fixed" id="map"></div>
+    <div class="flex-item"><img id="resultImg" src="" width="600px"></div>
+  </div>
   <div id="button">
     <button onclick="startSearch()">Into The Wild</button>
   </div>
@@ -47,16 +50,27 @@
     id: 'mapbox.streets'
   }).addTo(mymap)
 
+  var loopActive = false
+  var showImageAndLoop = function(images, i){
+    document.getElementById('resultImg').src = 'data:image/png;base64, ' + images[i]
+    if(loopActive){
+      setTimeout((()=>showImageAndLoop(images, (i+1) % images.length)), 500)
+    }
+  }
+
   var startSearch = function(){
+    loopActive = false
     var bounds = mymap.getBounds()
     const req = new XMLHttpRequest();
 
     req.onreadystatechange = function(event) {
         if (this.readyState === XMLHttpRequest.DONE) {
             if (this.status === 200) {
-                console.log("answer: %s", this.responseText);
+              console.log("answer: %s", this.responseText);
+              loopActive = true
+              showImageAndLoop(JSON.parse(this.responseText).pngData, 0)
             } else {
-                console.log("not 200 status, answer: %d (%s)", this.status, this.statusText);
+               console.log("not 200 status, answer: %d (%s)", this.status, this.statusText);
             }
         }
     };

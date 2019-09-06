@@ -17,5 +17,23 @@ var grid = Grid.generate(STATIC_BBOX)
 
 Model.get(STATIC_BBOX, function(res){
   grid = Grid.fillRoads(grid, res)
-  Draw.toPng(grid, "test.png")
+  var streamArray = drawgrid.toArrayBuffer(grid)
+  var arrayRes = []
+  streamArray.forEach(s => {
+    var chunks = []
+    console.log("registering ondata")
+    s.on('data', function(d){
+      chunks.push(d)
+    })
+    s.on('end', function(){
+      var res = Buffer.concat(chunks)
+      arrayRes.push(res.toString('base64'))
+      if(arrayRes.length == streamArray.length){
+        res.json({
+          pngData: arrayRes,
+          farAwayLocation: {},
+        })
+      }
+    })
+  })
 })

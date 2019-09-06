@@ -87,7 +87,7 @@ module.exports = {
           }
 
           var position = utmToGrid(grid, element)
-          if(position != null){ // Point from road might not be within boundaries, as road does not stop at bbox
+          if(position != null && grid.data[position.x][position.y].hasRoad == 0){ // Point from road might not be within boundaries, as road does not stop at bbox
             grid.data[position.x][position.y].hasRoad = 1
             grid.countRoadElements++
           }
