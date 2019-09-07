@@ -48,24 +48,25 @@ app.get('/roads', (req, res) => {
 
   Model.get(bbox, function(dbData){
     grid = Grid.fillRoads(grid, dbData)
-    var streamArray = Draw.toArrayBuffer(grid)
-    var arrayRes = []
-    streamArray.forEach(s => {
-      var chunks = []
-      s.on('data', function(d){
-        chunks.push(d)
-      })
-      s.on('end', function(){
-        arrayRes.push(Buffer.concat(chunks).toString('base64'))
-        console.log(`Got end event on one of streams. Progress: ${arrayRes.length}/${streamArray.length}`)
-        if(arrayRes.length == streamArray.length){
-          res.json({
-            pngData: arrayRes,
-            farAwayLocation: {},
-          })
-        }
-      })
-    })
+    res.json(Grid.findFurthestAway(grid))
+    // var streamArray = Draw.toArrayBuffer(grid)
+    // var arrayRes = []
+    // streamArray.forEach(s => {
+    //   var chunks = []
+    //   s.on('data', function(d){
+    //     chunks.push(d)
+    //   })
+    //   s.on('end', function(){
+    //     arrayRes.push(Buffer.concat(chunks).toString('base64'))
+    //     console.log(`Got end event on one of streams. Progress: ${arrayRes.length}/${streamArray.length}`)
+    //     if(arrayRes.length == streamArray.length){
+    //       res.json({
+    //         pngData: arrayRes,
+    //         farAwayLocation: {},
+    //       })
+    //     }
+    //   })
+    // })
   })
 })
 
