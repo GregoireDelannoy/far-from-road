@@ -1,5 +1,4 @@
 const Grid = require('./geoGrid.js')
-const Draw = require('./drawGrid.js')
 const Model = require('./model.js')
 
 const STATIC_BBOX = {
@@ -15,7 +14,7 @@ const STATIC_BBOX = {
 
 var grid = Grid.generate(STATIC_BBOX)
 
-Model.get(STATIC_BBOX, function(res){
+Model.get(STATIC_BBOX, function(res) {
   grid = Grid.fillRoads(grid, res)
   console.log(Grid.findFurthestAway(grid))
 })

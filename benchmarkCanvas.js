@@ -7,21 +7,21 @@ const DIMENSIONS = {
 const THRESHOLD = 0.95
 
 
-function timer(name, f){
+function timer(name, f) {
   var start = Date.now()
   f()
   console.log(`${name} took ${Date.now() - start}ms to execute`)
 }
 
 
-function fillGridBooleans(){
+function fillGridBooleans() {
   var c = 0
   var grid = []
   for (var i = 0; i < DIMENSIONS.x; i++) {
     var col = []
     for (var j = 0; j < DIMENSIONS.y; j++) {
       var hasRoad = false
-      if(Math.random() > THRESHOLD){
+      if (Math.random() > THRESHOLD) {
         hasRoad = true
         c++
       }
@@ -41,21 +41,23 @@ function fillGridBooleans(){
 }
 
 var grid = null
-timer('grid creation', (f => {grid = fillGridBooleans()}))
-//timer('PNG creation', (f => {drawgrid.toPng(grid, 'test.png')}))
-timer('GIF creation', (f => {
+timer('grid creation', (() => {
+    grid = fillGridBooleans()
+  }))
+  //timer('PNG creation', (f => {drawgrid.toPng(grid, 'test.png')}))
+timer('GIF creation', (() => {
   var streamArray = drawgrid.toArrayBuffer(grid)
   var arrayRes = []
   streamArray.forEach(s => {
     var chunks = []
     console.log("registering ondata")
-    s.on('data', function(d){
+    s.on('data', function(d) {
       chunks.push(d)
     })
-    s.on('end', function(){
+    s.on('end', function() {
       var res = Buffer.concat(chunks)
       arrayRes.push(res.toString('base64'))
-      if(arrayRes.length == streamArray.length){
+      if (arrayRes.length == streamArray.length) {
         console.log('All done!')
       }
     })

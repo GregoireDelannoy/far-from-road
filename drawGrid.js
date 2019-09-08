@@ -1,49 +1,42 @@
 const fs = require('fs')
 const PNG = require('pngjs').PNG
 
-const geogrid = require('./geoGrid.js')
-
-function paintRoadsContext(grid, png){
+function paintRoadsContext(grid, png) {
   for (var i = 0; i < grid.dimensions.x; i++) {
     for (var j = 0; j < grid.dimensions.y; j++) {
-      if(grid.data[i][j].hasRoad > 0){
-        var idx = (j*grid.dimensions.x + i)<<2
+      if (grid.data[i][j].hasRoad > 0) {
+        var idx = (j * grid.dimensions.x + i) << 2
         png.data[idx] = 0
-        png.data[idx+1] = 0
-        png.data[idx+2] = 0
-        png.data[idx+3] = 255
+        png.data[idx + 1] = 0
+        png.data[idx + 2] = 0
+        png.data[idx + 3] = 255
       }
     }
   }
 }
 
-function toPngStream(grid){
-  var png = new PNG({colorType:0, width: grid.dimensions.x, height: grid.dimensions.y, filterType: -1})
-  
+function toStream(grid) {
+  var png = new PNG({
+    colorType: 0,
+    width: grid.dimensions.x,
+    height: grid.dimensions.y,
+    filterType: -1
+  })
+
   paintRoadsContext(grid, png)
   return png.pack()
 }
 
-function toPng(grid, filename){
-  var out = fs.createWriteStream(filename)
-  toPngStream(grid).pipe(out)
-  out.on('finish', () =>  console.log(`PNG ${filename} was written.`))
-}
-
 module.exports = {
-  toArrayBuffer: function(grid){
-    var iteration = 1
-    var gridPointsTotal = grid.dimensions.x * grid.dimensions.y
-    ret = []
-    while(gridPointsTotal - grid.countRoadElements > 4 && iteration < 100){
-      grid = geogrid.growRoads(grid, iteration)
-
-      ret.push(toPngStream(grid))
-      //toPng(grid, `test${("0000" + iteration).slice(-4)}.png`)
-      console.log(`iteration #${iteration++}, roadElements: ${grid.countRoadElements} / ${gridPointsTotal}`)
-    }
-    return ret
+  toPngFile: function(grid, filename) {
+    var out = fs.createWriteStream(filename)
+    toStream(grid).pipe(out)
+    out.on('finish', () => console.log(`PNG ${filename} was written.`))
   },
-
-  toPng: toPng,
+  toPngBase64: function(grid, callback) {
+    var stream = toStream(grid)
+    var chunks = []
+    stream.on('data', d => chunks.push(d))
+    stream.on('end', () => callback(Buffer.concat(chunks).toString('base64')))
+  }
 }

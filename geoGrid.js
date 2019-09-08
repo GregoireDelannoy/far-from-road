@@ -1,10 +1,10 @@
 const GRID_MAX_RESOLUTION = 1024.0
 
-function dimensions(bbox){
+function dimensions(bbox) {
   var largestDimension = Math.max(
     bbox.lat.max - bbox.lat.min,
     bbox.long.max - bbox.long.min
-    )
+  )
   var increment = largestDimension / GRID_MAX_RESOLUTION
   console.debug(`Going from latitude ${bbox.lat.min} to ${bbox.lat.max} with a ${increment} increment`)
   return {
@@ -15,31 +15,27 @@ function dimensions(bbox){
   }
 }
 
-function element(){
+function element() {
   return {
     hasRoad: 0,
     isLand: true, // TODO: implement land detection with OSM polygons!
   }
 }
 
-function distance(p1, p2){
-  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
-}
-
-function utmToGrid(grid, point){
+function utmToGrid(grid, point) {
   if (
     point.lat < grid.bbox.lat.min ||
     point.lat > grid.bbox.lat.max ||
     point.long < grid.bbox.long.min ||
     point.long > grid.bbox.long.max
-    ){
+  ) {
     //console.error(`Point (${point.long},${point.lat}) is out of bbox bounds, cannot be found in grid`)
     return null
   } else {
     var x = Math.min(Math.floor((point.long - grid.bbox.long.min) / grid.dimensions.increment), grid.dimensions.x - 1)
-    // y-axis is top to bottom in figure but top to ceiling in utm; invert coordinate
+      // y-axis is top to bottom in figure but top to ceiling in utm; invert coordinate
     var y = Math.min(grid.dimensions.y - Math.floor((point.lat - grid.bbox.lat.min) / grid.dimensions.increment), grid.dimensions.y - 1)
-    //console.debug(`Point (${point.lat},${point.long}) => (${x}, ${y})`)
+      //console.debug(`Point (${point.lat},${point.long}) => (${x}, ${y})`)
     return {
       x: x,
       y: y
@@ -47,7 +43,7 @@ function utmToGrid(grid, point){
   }
 }
 
-function gridToUtm(grid, point){
+function gridToUtm(grid, point) {
   // Aim for the middle of pixel
   return {
     long: grid.bbox.long.min + (point.x + 0.5) * grid.dimensions.increment,
@@ -55,28 +51,32 @@ function gridToUtm(grid, point){
   }
 }
 
-function setRoad(grid, i, j, iteration){
-  if(grid.data[i][j].hasRoad == 0){
-    grid.data[i][j].hasRoad = iteration + 1
-    grid.countRoadElements++
-    // Last point colorized?
-    if(grid.countRoadElements == grid.dimensions.x * grid.dimensions.y){
-      grid.furthestAway = {
-        x: i,
-        y: j
-      }
+function setRoad(grid, i, j, iteration) {
+  if (i < 0 || i >= grid.dimensions.x || j < 0 || j >= grid.dimensions.y) {
+    return
+  } else {
+    if (grid.data[i][j].hasRoad == 0) {
+      grid.data[i][j].hasRoad = iteration + 1
+      grid.countRoadElements++
+        // Last point colorized?
+        if (grid.countRoadElements == grid.dimensions.x * grid.dimensions.y) {
+          grid.furthestAway = {
+            x: i,
+            y: j
+          }
+        }
     }
   }
 }
 
-function growRoads(grid, iteration){
-  for (var i = 1; i < grid.dimensions.x - 1; i++) {
-    for(var j = 1; j < grid.dimensions.y - 1; j++){
-      if (grid.data[i][j].hasRoad == iteration){
-        setRoad(grid, i-1, j, iteration)
-        setRoad(grid, i+1, j, iteration)
-        setRoad(grid, i, j-1, iteration)
-        setRoad(grid, i, j+1, iteration)
+function growRoads(grid, iteration) {
+  for (var i = 0; i < grid.dimensions.x; i++) {
+    for (var j = 0; j < grid.dimensions.y; j++) {
+      if (grid.data[i][j].hasRoad == iteration) {
+        setRoad(grid, i - 1, j, iteration)
+        setRoad(grid, i + 1, j, iteration)
+        setRoad(grid, i, j - 1, iteration)
+        setRoad(grid, i, j + 1, iteration)
       }
     }
   }
@@ -84,7 +84,7 @@ function growRoads(grid, iteration){
 }
 
 module.exports = {
-  generate: function(bbox){
+  generate: function(bbox) {
     var ret = {
       bbox: bbox,
       dimensions: dimensions(bbox),
@@ -96,9 +96,9 @@ module.exports = {
       var long = []
       for (var j = 0; j < ret.dimensions.y; j++) {
         var e = element()
-        if(i == 0 || j == 0 || i == ret.dimensions.x - 1 || j == ret.dimensions.y - 1){
+        if (i == 0 || j == 0 || i == ret.dimensions.x - 1 || j == ret.dimensions.y - 1) {
           ret.countRoadElements++
-          e.hasRoad = 1
+            e.hasRoad = 1
         }
         long.push(e)
       }
@@ -106,11 +106,11 @@ module.exports = {
     }
     return ret
   },
-  fillRoads: function(grid, roads){
+  fillRoads: function(grid, roads) {
     roads.forEach(r => {
       for (var i = 0; i < r.coordinates.length - 1; i++) {
         var currPoint = r.coordinates[i]
-        var nextPoint = r.coordinates[i+1]
+        var nextPoint = r.coordinates[i + 1]
         var vector = [nextPoint[0] - currPoint[0], nextPoint[1] - currPoint[1]]
         var vectorLength = Math.sqrt(Math.pow(vector[0], 2), Math.pow(vector[1], 2))
 
@@ -122,7 +122,7 @@ module.exports = {
           }
 
           var position = utmToGrid(grid, element)
-          if(position != null && grid.data[position.x][position.y].hasRoad == 0){ // Point from road might not be within boundaries, as road does not stop at bbox
+          if (position != null && grid.data[position.x][position.y].hasRoad == 0) { // Point from road might not be within boundaries, as road does not stop at bbox
             grid.data[position.x][position.y].hasRoad = 1
             grid.countRoadElements++
           }
@@ -134,17 +134,22 @@ module.exports = {
 
   growRoads: growRoads,
 
-  findFurthestAway: function(grid){
+  findFurthestAway: function(grid) {
     var gridPointsTotal = grid.dimensions.x * grid.dimensions.y
     var iteration = 1
-    while(gridPointsTotal > grid.countRoadElements && iteration < 1000){
+    while (gridPointsTotal > grid.countRoadElements && iteration < 1000) {
       grid = growRoads(grid, iteration)
-      console.log(`iteration #${iteration++}, roadElements: ${grid.countRoadElements} / ${gridPointsTotal}`)
+      iteration++
+      // debug:
+      //console.log(`iteration #${iteration}, roadElements: ${grid.countRoadElements} / ${gridPointsTotal}`)
+      //Draw.toPng(grid, `test${("0000" + iteration).slice(-4)}.png`)
     }
-    if(!grid.furthestAway){
-      throw "Did not find last colorized point. Error!"
+    if (!grid.furthestAway) {
+      console.log("Did not find last colorized point within iteration limit. Error!")
+      return null
+    } else {
+      console.log(`Found point @${grid.furthestAway.x},${grid.furthestAway.y}`)
+      return gridToUtm(grid, grid.furthestAway)
     }
-    console.log(`Found point @${grid.furthestAway.x},${grid.furthestAway.y}`)
-    return gridToUtm(grid, grid.furthestAway)
   },
 }

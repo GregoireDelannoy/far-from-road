@@ -9,6 +9,8 @@
   },
   "author": "Grégoire Delannoy",
   "dependencies": {
+    "cli-engine": "^4.7.6",
+    "eslint": "^6.3.0",
     "express": "",
     "pg": "",
     "pngjs": ""
