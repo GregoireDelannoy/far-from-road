@@ -1,4 +1,4 @@
-const GRID_MAX_RESOLUTION = 1024.0
+const GRID_MAX_RESOLUTION = 512.0
 
 function dimensions(bbox) {
   var largestDimension = Math.max(
@@ -116,7 +116,6 @@ module.exports = {
         var nextPoint = r.coordinates[i + 1]
         var vector = [nextPoint[0] - currPoint[0], nextPoint[1] - currPoint[1]]
         var vectorLength = Math.sqrt(Math.pow(vector[0], 2) + Math.pow(vector[1], 2))
-        console.log(`vector length between (${currPoint[0]},${currPoint[1]}) and (${nextPoint[0]},${nextPoint[1]}) is ${vectorLength}`)
 
         // Paint 1 pixel in between each line point: Go along computed vector and paint every #
         for (var j = 0.0; j < vectorLength; j += grid.dimensions.increment) {
@@ -124,9 +123,7 @@ module.exports = {
             long: currPoint[0] + j * vector[0]/vectorLength,
             lat: currPoint[1] + j * vector[1]/vectorLength
           }
-          console.dir(element)
           var position = utmToGrid(grid, element)
-          console.dir(position)
           if (position != null && grid.data[position.x][position.y].hasRoad == 0) { // Point from road might not be within boundaries, as road does not stop at bbox
             grid.data[position.x][position.y].hasRoad = 1
             grid.countRoadElements++
