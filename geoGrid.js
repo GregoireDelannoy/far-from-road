@@ -96,6 +96,8 @@ module.exports = {
       var long = []
       for (var j = 0; j < ret.dimensions.y; j++) {
         var e = element()
+        /* Paint outer edges as having roads. Avoid finds at edges that might be fakes.
+        TODO: Find a better solution! Expand grid compared to bbox and load actual roads? */
         if (i == 0 || j == 0 || i == ret.dimensions.x - 1 || j == ret.dimensions.y - 1) {
           ret.countRoadElements++
             e.hasRoad = 1
@@ -106,22 +108,25 @@ module.exports = {
     }
     return ret
   },
+
   fillRoads: function(grid, roads) {
     roads.forEach(r => {
       for (var i = 0; i < r.coordinates.length - 1; i++) {
         var currPoint = r.coordinates[i]
         var nextPoint = r.coordinates[i + 1]
         var vector = [nextPoint[0] - currPoint[0], nextPoint[1] - currPoint[1]]
-        var vectorLength = Math.sqrt(Math.pow(vector[0], 2), Math.pow(vector[1], 2))
+        var vectorLength = Math.sqrt(Math.pow(vector[0], 2) + Math.pow(vector[1], 2))
+        console.log(`vector length between (${currPoint[0]},${currPoint[1]}) and (${nextPoint[0]},${nextPoint[1]}) is ${vectorLength}`)
 
         // Paint 1 pixel in between each line point: Go along computed vector and paint every #
-        for (var j = 0; j < vectorLength; j += grid.dimensions.increment) {
+        for (var j = 0.0; j < vectorLength; j += grid.dimensions.increment) {
           var element = {
-            long: currPoint[0] + j * vector[0],
-            lat: currPoint[1] + j * vector[1]
+            long: currPoint[0] + j * vector[0]/vectorLength,
+            lat: currPoint[1] + j * vector[1]/vectorLength
           }
-
+          console.dir(element)
           var position = utmToGrid(grid, element)
+          console.dir(position)
           if (position != null && grid.data[position.x][position.y].hasRoad == 0) { // Point from road might not be within boundaries, as road does not stop at bbox
             grid.data[position.x][position.y].hasRoad = 1
             grid.countRoadElements++
@@ -132,12 +137,10 @@ module.exports = {
     return grid
   },
 
-  growRoads: growRoads,
-
   findFurthestAway: function(grid) {
     var gridPointsTotal = grid.dimensions.x * grid.dimensions.y
     var iteration = 1
-    while (gridPointsTotal > grid.countRoadElements && iteration < 1000) {
+    while (gridPointsTotal > grid.countRoadElements && iteration < Math.floor(GRID_MAX_RESOLUTION)) {
       grid = growRoads(grid, iteration)
       iteration++
       // debug:
