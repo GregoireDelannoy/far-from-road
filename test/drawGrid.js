@@ -53,10 +53,10 @@ describe('Grid drawing interface', function() {
     })
   })
 
-  describe('#toPngBase64()', function(){
-    it('returns the correct base64 string for 3x3 grid', function(done){
+  describe('#toPngBase64()', function() {
+    it('returns the correct base64 string for 3x3 grid', function(done) {
       var grid = exampleGrid()
-      Draw.toPngBase64(grid, ret => {
+      Draw.toPngBase64(grid).then(ret => {
         assert.equal(ret, 'iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAAAAABzQ+pjAAAAAklEQVR4AewaftIAAAASSURBVGNk+M/A8J/hP8P//wwAGv0E/T4EYvUAAAAASUVORK5CYII=')
         done()
       })

@@ -1,4 +1,7 @@
+const Draw = require('./drawGrid.js')
+
 const GRID_MAX_RESOLUTION = 512.0
+const DENSITY_STEP = 0.2 // Output one image every % of density
 
 function dimensions(bbox) {
   var largestDimension = Math.max(
@@ -136,20 +139,28 @@ module.exports = {
 
   findFurthestAway: function(grid) {
     var gridPointsTotal = grid.dimensions.x * grid.dimensions.y
-    var iteration = 1
-    while (gridPointsTotal > grid.countRoadElements && iteration < Math.floor(GRID_MAX_RESOLUTION)) {
-      grid = growRoads(grid, iteration)
+    var iteration = 0
+    var pngStreamPromises = [Draw.toPngBase64(grid)]
+    while (gridPointsTotal > grid.countRoadElements && iteration < GRID_MAX_RESOLUTION) {
       iteration++
+      grid = growRoads(grid, iteration)
+      var density = grid.countRoadElements / gridPointsTotal
+      if(density > pngStreamPromises.length * DENSITY_STEP){
+        pngStreamPromises.push(Draw.toPngBase64(grid))
+      }
       // debug:
       //console.log(`iteration #${iteration}, roadElements: ${grid.countRoadElements} / ${gridPointsTotal}`)
-      //Draw.toPng(grid, `test${("0000" + iteration).slice(-4)}.png`)
     }
+    pngStreamPromises.push(Draw.toPngBase64(grid))
     if (!grid.furthestAway) {
-      console.log("Did not find last colorized point within iteration limit. Error!")
+      console.error("Did not find last colorized point within iteration limit. Error!")
       return null
     } else {
-      console.log(`Found point @${grid.furthestAway.x},${grid.furthestAway.y}`)
-      return gridToUtm(grid, grid.furthestAway)
+      console.debug(`Found point @${grid.furthestAway.x},${grid.furthestAway.y}`)
+      return {
+        coordinates: gridToUtm(grid, grid.furthestAway),
+        pngStreamPromises: pngStreamPromises,
+      }
     }
   },
 }

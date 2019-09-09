@@ -83,8 +83,8 @@ describe('Grid generate and compute interface', function() {
   describe('#findFurthestAway()', function() {
     it('finds furthest point given example roads', function(){
       var furthestPoint = Grid.findFurthestAway(grid)
-      assert.ok(Math.abs(furthestPoint.long - KNOW_FURTHEST_AWAY_POINT.long) < DEGREES_ERROR_THRESHOLD)
-      assert.ok(Math.abs(furthestPoint.lat - KNOW_FURTHEST_AWAY_POINT.lat) < DEGREES_ERROR_THRESHOLD)
+      assert.ok(Math.abs(furthestPoint.coordinates.long - KNOW_FURTHEST_AWAY_POINT.long) < DEGREES_ERROR_THRESHOLD)
+      assert.ok(Math.abs(furthestPoint.coordinates.lat - KNOW_FURTHEST_AWAY_POINT.lat) < DEGREES_ERROR_THRESHOLD)
     })
   })
 })

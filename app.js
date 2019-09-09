@@ -3,7 +3,7 @@ const Model = require('./model.js')
 const express = require('express')
 
 const app = express()
-const PORT = 80
+const PORT = 3000
 const HOST = '0.0.0.0'
 
 function parseBoundingBox(req) {
@@ -49,7 +49,14 @@ app.get('/roads', (req, res) => {
 
   Model.get(bbox, function(dbData) {
     grid = Grid.fillRoads(grid, dbData)
-    res.json(Grid.findFurthestAway(grid))
+    var ret = Grid.findFurthestAway(grid)
+    Promise.all(ret.pngStreamPromises)
+      .then(values => {
+        res.json({
+          coordinates: ret.coordinates,
+          images: values,
+        })
+      })
   })
 })
 
