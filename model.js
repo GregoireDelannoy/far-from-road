@@ -8,7 +8,7 @@ module.exports = {
     const pool = new Pool()
     pool.query(`
       SELECT st_asgeojson(st_transform(way, 4326))
-      FROM planet_osm_line
+      FROM line_small
       WHERE ST_Intersects(
         ST_Transform(
             ST_MakeEnvelope(${bbox.long.min}, ${bbox.lat.min}, ${bbox.long.max}, ${bbox.lat.max}, 

@@ -3,7 +3,8 @@ const Model = require('./model.js')
 const express = require('express')
 
 const app = express()
-const port = 3000
+const PORT = 80
+const HOST = '0.0.0.0'
 
 function parseBoundingBox(req) {
   if (!(req.query.latmin) || Math.abs(parseFloat(req.query.latmin)) > 90) {
@@ -54,4 +55,4 @@ app.get('/roads', (req, res) => {
 
 app.use(express.static('public'))
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+app.listen(PORT, HOST, () => console.log(`App listening on port ${PORT}!`))
