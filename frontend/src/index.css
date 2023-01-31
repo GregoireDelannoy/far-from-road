@@ -1,66 +1,23 @@
-body {
-  font-family: sans-serif;
-  margin: 20px;
-  padding: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
 
+/* Match logo font */
+@font-face {
+  font-family: "Light";
+  src: url("./fonts/libre-franklin-extra-light.ttf") format("truetype");
+}
 * {
-  box-sizing: border-box;
+  font-family: "Light";
 }
 
-h1 {
-  margin-top: 0;
-  font-size: 22px;
+.leaflet-container {
+  height: 100%;
 }
 
-h2 {
-  margin-top: 0;
-  font-size: 20px;
-}
-
-h3 {
-  margin-top: 0;
-  font-size: 18px;
-}
-
-h4 {
-  margin-top: 0;
-  font-size: 16px;
-}
-
-h5 {
-  margin-top: 0;
-  font-size: 14px;
-}
-
-h6 {
-  margin-top: 0;
-  font-size: 12px;
-}
-
-code {
-  font-size: 1.2em;
-}
-
-ul {
-  padding-left: 20px;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  font-family: sans-serif;
-  margin: 20px;
-  padding: 0;
+.sr-only {
+  display: none;
 }
 
 .square {
@@ -84,14 +41,7 @@ body {
   display: table;
 }
 
-.status {
-  margin-bottom: 10px;
-}
 .game {
   display: flex;
   flex-direction: row;
-}
-
-.game-info {
-  margin-left: 20px;
 }

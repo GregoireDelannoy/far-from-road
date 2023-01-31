@@ -1,4 +1,6 @@
 import { ReactElement, useState } from 'react';
+import logo from './logo.svg';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 
 interface SquareProps {
   value: string | null;
@@ -41,7 +43,7 @@ function Board(): ReactElement {
 
   return (
     <>
-      <span className="game-info">{gameStatus}</span>
+      <span className="game-info text-3xl">{gameStatus}</span>
       <div className="board-row">
         <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
         <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
@@ -62,7 +64,7 @@ function Board(): ReactElement {
 }
 
 
-function calculateWinner(squares: string|null[]) {
+function calculateWinner(squares: string | null[]) {
   const lines = [
     [0, 1, 2],
     [3, 4, 5],
@@ -82,4 +84,36 @@ function calculateWinner(squares: string|null[]) {
   return null;
 }
 
-export default Board;
+function Map(): ReactElement {
+  return (
+    <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false}>
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      <Marker position={[51.505, -0.09]}>
+        <Popup>
+          A pretty CSS3 popup. <br /> Easily customizable.
+        </Popup>
+      </Marker>
+    </MapContainer>
+  );
+}
+
+function App(): ReactElement {
+  return (
+    <>
+      <div className='grid grid-cols-2 gap-4'>
+        <img className='max-h-[10rem]' src={logo} alt='Logo' />
+        <div className='flex justify-center items-center'>
+          <span className='font-bold text-xl'>Escape the crowd</span>
+        </div>
+      </div>
+      <div className='h-[60vh] mx-[0.25rem]'>
+        <Map />
+      </div>
+    </>
+  )
+}
+
+export default App;
