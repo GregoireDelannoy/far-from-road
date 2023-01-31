@@ -120,10 +120,10 @@
         }
       };
 
-      req.open('GET', '/farfromroad/roads?longmin=' + bounds._southWest.lng +
-        "&longmax=" + bounds._northEast.lng +
-        "&latmin=" + bounds._southWest.lat +
-        "&latmax=" + bounds._northEast.lat
+      req.open('GET', 'roads?longMin=' + bounds._southWest.lng +
+        "&longMax=" + bounds._northEast.lng +
+        "&latMin=" + bounds._southWest.lat +
+        "&latMax=" + bounds._northEast.lat
         , true);
       req.send(null);
     }
