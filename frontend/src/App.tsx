@@ -12,7 +12,7 @@ function Map() {
 
   return (
     <MapContainer
-      center={[44.911518 , 6.36352]}
+      center={[44.911518, 6.36352]}
       zoom={9}
       zoomControl={true}
     >

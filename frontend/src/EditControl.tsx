@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default function EditControlFC({ geojson, setGeojson }: Props) {
+    const ref = useRef<L.FeatureGroup>(null);
     const [allowedControls, setAllowedControls] = useState({
         rectangle: true,
         circle: true,
@@ -18,7 +19,6 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
         marker: false,
         circlemarker: false,
     });
-    const ref = useRef<L.FeatureGroup>(null);
 
     useEffect(() => {
         if (ref.current?.getLayers().length === 0 && geojson) {
@@ -42,10 +42,8 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
 
     const handleChange = () => {
         const geo = ref.current?.toGeoJSON();
-        console.log(geo);
         if (geo?.type === 'FeatureCollection') {
             setGeojson(geo);
-
             if (geo.features.length > 0) {
                 setAllowedControls({
                     ...allowedControls,
@@ -53,11 +51,12 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
                     polygon: false,
                     circle: false,
                 });
-            } else{
+            } else {
                 setAllowedControls({
                     ...allowedControls,
                     rectangle: true,
                     polygon: true,
+                    circle: false,
                 });
             }
         }
@@ -65,13 +64,13 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
 
     return (
         <FeatureGroup ref={ref}>
-            <EditControl
+            {<EditControl
                 position="topright"
                 onEdited={handleChange}
                 onCreated={handleChange}
                 onDeleted={handleChange}
                 draw={allowedControls}
-            />
+            />}
         </FeatureGroup>
     );
 }
