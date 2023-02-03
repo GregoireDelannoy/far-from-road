@@ -13,7 +13,7 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
     const ref = useRef<L.FeatureGroup>(null);
     const [allowedControls, setAllowedControls] = useState({
         rectangle: true,
-        circle: true,
+        circle: true, // Workaround disappearing toolbar: Circle is set to true but not displayed, see CSS.
         polyline: false,
         polygon: true,
         marker: false,
@@ -43,7 +43,6 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
     const handleChange = () => {
         const geo = ref.current?.toGeoJSON();
         if (geo?.type === 'FeatureCollection') {
-            setGeojson(geo);
             if (geo.features.length > 0) {
                 setAllowedControls({
                     ...allowedControls,
@@ -59,6 +58,7 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
                     circle: false,
                 });
             }
+            setGeojson(geo);
         }
     };
 
