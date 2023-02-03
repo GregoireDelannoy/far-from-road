@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
 import logo from './logo.svg';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, ImageOverlay } from 'react-leaflet'
 import type { FeatureCollection, GeoJsonProperties, Geometry, Polygon } from 'geojson';
 import EditControlFC from './EditControl';
-import { Browser } from 'leaflet';
+import { Browser, latLngBounds, latLng } from 'leaflet';
 import {BoundingBox, WorkerToMainMessage} from './WorkerMessages';
 
 function AppHeader() {
@@ -19,11 +19,18 @@ function AppHeader() {
   );
 }
 
-interface MapProps {
-  onFeaturesChange: (features: FeatureCollection<Geometry, GeoJsonProperties>) => void;
+interface ImageOverlayProps {
+    url: string;
+    topLeftCorner: number[];
+    bottomRightCorner: number[];
 }
 
-function Map({ onFeaturesChange }: MapProps) {
+interface MapProps {
+  onFeaturesChange: (features: FeatureCollection<Geometry, GeoJsonProperties>) => void;
+  imageOverlay: ImageOverlayProps
+}
+
+function Map({ onFeaturesChange, imageOverlay }: MapProps) {
   const [geojson, setGeojson] = useState<FeatureCollection>({
     type: 'FeatureCollection',
     features: [],
@@ -32,6 +39,11 @@ function Map({ onFeaturesChange }: MapProps) {
   function onGeoJsonChange(features: FeatureCollection<Geometry, GeoJsonProperties>) {
     onFeaturesChange(features);
     setGeojson(features);
+  }
+
+  let overlay = <span />
+  if (imageOverlay.url) {
+     overlay = <ImageOverlay url = {imageOverlay.url} bounds={latLngBounds(latLng(imageOverlay.topLeftCorner[0], imageOverlay.topLeftCorner[1]), latLng(imageOverlay.bottomRightCorner[0], imageOverlay.bottomRightCorner[1]))}/>
   }
 
   return (
@@ -45,6 +57,7 @@ function Map({ onFeaturesChange }: MapProps) {
         attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
       />
+      {overlay}
       <EditControlFC geojson={geojson} setGeojson={onGeoJsonChange} />
     </MapContainer>
   );
@@ -104,7 +117,11 @@ function App() {
   const [searchButtonState, setSearchButtonState] = useState({ actionable: false, isDone: false, current: false, text: '3 Search!', onClick: onClickSearch })
   const selectedShape = useRef<Geometry>();
   const geoFeatures = useRef<Geometry[]>();
-  const [imageSource, setImageSource] = useState('');
+  const [imageOverlay, setImageOverlay] = useState<ImageOverlayProps>({
+    url: '',
+    topLeftCorner: [],
+    bottomRightCorner: [],
+  });
 
   function stateSelectShapes() {
     setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: false, current: true });
@@ -162,13 +179,18 @@ function App() {
 
   function onClickSearch(){
     if (selectedShape.current && selectedShape.current.type === 'Polygon') {
+      const bbox = geometryToEnlargedBounds(selectedShape.current);
       const worker = new Worker(new URL('./searchFarthestPoint.worker.ts', import.meta.url));
       worker.onmessage = (e: MessageEvent<WorkerToMainMessage>) => {
           console.log('Received from worker:', e.data);
-          setImageSource(URL.createObjectURL(e.data.img));
+          setImageOverlay({
+            url: URL.createObjectURL(e.data.img),
+            topLeftCorner: [bbox.latMin, bbox.longMin],
+            bottomRightCorner: [bbox.latMax, bbox.longMax],
+          });
       };
       worker.postMessage({
-        bbox: geometryToEnlargedBounds(selectedShape.current),
+        bbox: bbox,
         roads: geoFeatures.current,
       });
     }
@@ -178,7 +200,7 @@ function App() {
     <>
       <AppHeader />
       <div className='h-[80vh] mx-[0.25rem]'>
-        <Map onFeaturesChange={onMapFeaturesChange} />
+        <Map onFeaturesChange={onMapFeaturesChange} imageOverlay={imageOverlay}/>
       </div>
       <div className="flex w-screen">
         <div className='flex m-auto my-2 gap-2 flex-wrap'>
@@ -187,7 +209,6 @@ function App() {
           <StepButton {...searchButtonState} />
         </div>
       </div>
-      <img src = {imageSource} alt = {imageSource}></img>
     </>
   )
 }
