@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
 import logo from './logo.svg';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
-import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
+import type { FeatureCollection, GeoJsonProperties, Geometry, Polygon } from 'geojson';
 import EditControlFC from './EditControl';
 import { Browser } from 'leaflet';
+import {BoundingBox, WorkerToMainMessage} from './WorkerMessages';
 
 function AppHeader() {
   return (
@@ -86,22 +87,43 @@ function StepButton({ actionable, isDone, current, text, onClick }: StepButtonPr
   )
 }
 
+function geometryToEnlargedBounds(geom: Polygon): BoundingBox {
+  const long = geom.coordinates[0].map(x => x[0])
+  const lat = geom.coordinates[0].map(x => x[1])
+  return {
+    latMin: Math.min(...lat),
+    latMax: Math.max(...lat),
+    longMin: Math.min(...long),
+    longMax: Math.max(...long),
+  }
+}
+
 function App() {
   const [shapesButtonState, setShapesButtonState] = useState({ actionable: false, isDone: false, current: true, text: '1 Draw shape on map', onClick: () => { } })
   const [loadButtonState, setLoadButtonState] = useState({ actionable: false, isDone: false, current: false, text: '2 Load geo-features', onClick: onClickLoadFeatures })
-  const [searchButtonState, setSearchButtonState] = useState({ actionable: false, isDone: false, current: false, text: '3 Search!', onClick: () => { } })
+  const [searchButtonState, setSearchButtonState] = useState({ actionable: false, isDone: false, current: false, text: '3 Search!', onClick: onClickSearch })
   const selectedShape = useRef<Geometry>();
+  const geoFeatures = useRef<Geometry[]>();
+  const [imageSource, setImageSource] = useState('');
 
   function stateSelectShapes() {
     setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: false, current: true });
     setLoadButtonState({ ...loadButtonState, actionable: false, isDone: false, current: false });
     setSearchButtonState({ ...searchButtonState, actionable: false, isDone: false, current: false });
   }
+
   function stateLoadFeatures() {
     setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: true, current: false });
     setLoadButtonState({ ...loadButtonState, actionable: true, isDone: false, current: true });
     setSearchButtonState({ ...searchButtonState, actionable: false, isDone: false, current: false });
   }
+
+  function stateWaitFeatures() {
+    setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: true, current: false });
+    setLoadButtonState({ ...loadButtonState, actionable: false, isDone: false, current: true });
+    setSearchButtonState({ ...searchButtonState, actionable: false, isDone: false, current: false });
+  }
+
   function stateSearch() {
     setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: true, current: false });
     setLoadButtonState({ ...loadButtonState, actionable: false, isDone: true, current: false });
@@ -119,6 +141,37 @@ function App() {
   }
 
   function onClickLoadFeatures() {
+    if (selectedShape.current && selectedShape.current.type === 'Polygon') {
+      stateWaitFeatures();
+      const bounds = geometryToEnlargedBounds(selectedShape.current);
+      const queryParameters = Object.entries(bounds)
+        .map(kv => `${kv[0]}=${kv[1]}`)
+        .reduce((a,b) => a + '&' + b);
+      fetch(`http://127.0.0.1:4000/roads?${queryParameters}`)
+        .then(res => res.json())
+        .then((res) => {
+          geoFeatures.current = res;
+          stateSearch();
+        },
+        (error) => {
+          console.error(error);
+          alert('There has been an error downloading geoFeatures. Check console.')
+        })
+    }
+  }
+
+  function onClickSearch(){
+    if (selectedShape.current && selectedShape.current.type === 'Polygon') {
+      const worker = new Worker(new URL('./searchFarthestPoint.worker.ts', import.meta.url));
+      worker.onmessage = (e: MessageEvent<WorkerToMainMessage>) => {
+          console.log('Received from worker:', e.data);
+          setImageSource(URL.createObjectURL(e.data.img));
+      };
+      worker.postMessage({
+        bbox: geometryToEnlargedBounds(selectedShape.current),
+        roads: geoFeatures.current,
+      });
+    }
   }
 
   return (
@@ -134,6 +187,7 @@ function App() {
           <StepButton {...searchButtonState} />
         </div>
       </div>
+      <img src = {imageSource} alt = {imageSource}></img>
     </>
   )
 }
