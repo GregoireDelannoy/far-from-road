@@ -5,7 +5,7 @@ import { Grid } from './WorkerInternalsInterface';
 import proj4 from 'proj4';
 
 const GRID_MAX_RESOLUTION = 1024.0
-const DENSITY_STEP = 0.1 // Output one image every % of density
+const DENSITY_STEP = 0.08 // Output one image every % of density
 
 function dimensions(bbox: BoundingBox) {
   var largestDimension = Math.max(
@@ -13,7 +13,6 @@ function dimensions(bbox: BoundingBox) {
     bbox.longMax - bbox.longMin
   )
   var increment = largestDimension / GRID_MAX_RESOLUTION
-  // console.debug(`Going from latitude ${bbox.latMin} to ${bbox.latMax} with a ${increment} increment`);
   return {
     //TODO: Check that x and y are always positive. What if bbox cross -180/+180°?
     x: Math.round((bbox.longMax - bbox.longMin) / increment),
@@ -52,10 +51,10 @@ function utmToGrid(grid: Grid, point: { long: any; lat: any; }) {
 
 function gridToUtm(grid: Grid, point: { x: number; y: number; }) {
   // Aim for the middle of pixel
-  return {
-    long: grid.bbox.longMin + (point.x + 0.5) * grid.dimensions.increment,
-    lat: grid.bbox.latMin + (0.5 + grid.dimensions.y - point.y) * grid.dimensions.increment,
-  }
+  return [
+    grid.bbox.longMin + (point.x + 0.5) * grid.dimensions.increment,
+    grid.bbox.latMin + (0.5 + grid.dimensions.y - point.y) * grid.dimensions.increment,
+  ];
 }
 
 function setRoad(grid: Grid, i: number, j: number, iteration: number) {
@@ -141,12 +140,6 @@ function fillRoads(grid: Grid, roads: any[]) {
   return grid
 }
 
-function findFurthestAway(grid: Grid) {
-  
-}
-
-
-
 self.onmessage = (e: MessageEvent<MainToWorkerMessage>) => {
   let grid = generateGrid(e.data.bbox);
   const gridPointsTotal = grid.dimensions.x * grid.dimensions.y
@@ -164,11 +157,12 @@ self.onmessage = (e: MessageEvent<MainToWorkerMessage>) => {
         img: new Blob([gridToPng(grid)], {type: 'image/png'}),
         coordinates: [],
       });
+      sentImages++;
     }
     console.debug(`iteration #${iteration}, roadElements: ${grid.countRoadElements} / ${gridPointsTotal}`)
   }
   if (!grid.furthestAway) {
-    alert("Did not find last colorized point within iteration limit. Error!")
+    console.error("Did not find last colorized point within iteration limit. Error!")
     return null
   } else {
     console.debug(`Found point @${grid.furthestAway.x},${grid.furthestAway.y}`)

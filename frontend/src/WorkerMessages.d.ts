@@ -7,13 +7,13 @@ interface BoundingBox {
 
 interface MainToWorkerMessage {
     bbox: BoundingBox
-    roads: [Geometry]
+    roads: Geometry[]
 };
 
 interface WorkerToMainMessage {
     isFinalResult: boolean
     img: Blob
-    coordinates: [number]
+    coordinates: number[]
 }
 
 export {BoundingBox, MainToWorkerMessage, WorkerToMainMessage};
