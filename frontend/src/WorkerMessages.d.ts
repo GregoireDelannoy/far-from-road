@@ -1,3 +1,5 @@
+import { Geometry, Polygon } from 'geojson';
+
 interface BoundingBox {
     latMin: number
     latMax: number
@@ -7,7 +9,9 @@ interface BoundingBox {
 
 interface MainToWorkerMessage {
     bbox: BoundingBox
+    selectedArea: Polygon,
     roads: Geometry[]
+    waters: Geometry[]
 };
 
 interface WorkerToMainMessage {

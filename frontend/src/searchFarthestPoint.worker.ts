@@ -1,11 +1,34 @@
 /* eslint-disable no-restricted-globals */
+import { Geometry, Polygon } from 'geojson';
+import proj4 from 'proj4';
+import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+
 import { BoundingBox, MainToWorkerMessage } from './WorkerMessages';
 import { gridToPng } from './drawGrid';
-import { Grid } from './WorkerInternalsInterface';
-import proj4 from 'proj4';
 
-const GRID_MAX_RESOLUTION = 1024.0
-const DENSITY_STEP = 0.08 // Output one image every % of density
+const GRID_MAX_RESOLUTION = 64.0
+const DENSITY_STEP = 0.001 // Output one image every % of density
+
+
+class GridElement {
+  hasRoad: number = 0;
+  isLand: boolean = true;
+  withinBounds: boolean = false;
+  excluded: boolean = false;
+}
+
+class Grid {
+  dimensions: {
+    x: number;
+    y: number;
+    increment: number;
+  } = { x: 0, y: 0, increment: 0 };
+  data: GridElement[][] = [];
+  furthestAway: null | { x: number; y: number; } = null;
+  bbox: BoundingBox = { latMin: 0, latMax: 0, longMin: 0, longMax: 0 }
+  countExcludedElements: number = 0;
+};
+
 
 function dimensions(bbox: BoundingBox) {
   var largestDimension = Math.max(
@@ -18,13 +41,6 @@ function dimensions(bbox: BoundingBox) {
     x: Math.round((bbox.longMax - bbox.longMin) / increment),
     y: Math.round((bbox.latMax - bbox.latMin) / increment),
     increment: increment,
-  }
-}
-
-function gridElement() {
-  return {
-    hasRoad: 0,
-    isLand: true, // TODO: implement land detection with OSM polygons!
   }
 }
 
@@ -63,12 +79,14 @@ function setRoad(grid: Grid, i: number, j: number, iteration: number) {
   } else {
     if (grid.data[i][j].hasRoad === 0) {
       grid.data[i][j].hasRoad = iteration + 1
-      grid.countRoadElements++
-      // Last point colorized?
-      if (grid.countRoadElements === grid.dimensions.x * grid.dimensions.y) {
-        grid.furthestAway = {
-          x: i,
-          y: j
+      if (grid.data[i][j].isLand && grid.data[i][j].withinBounds) {
+        grid.countExcludedElements++;
+        // Last point colorized?
+        if (!grid.furthestAway && grid.countExcludedElements === grid.dimensions.x * grid.dimensions.y) {
+          grid.furthestAway = {
+            x: i,
+            y: j
+          }
         }
       }
     }
@@ -89,26 +107,29 @@ function growRoads(grid: Grid, iteration: number) {
   return grid
 }
 
-function generateGrid(bbox: BoundingBox): Grid {
-  let res = {
-    bbox: bbox,
-    dimensions: dimensions(bbox),
-    // eslint-disable-next-line @typescript-eslint/no-array-constructor
-    data: Array(),
-    countRoadElements: 0,
-    furthestAway: null,
-  }
+function generateGrid(bbox: BoundingBox, selectedArea: Polygon, waters: Geometry[]): Grid {
+  let res = new Grid();
+  res.bbox = bbox
+  res.dimensions = dimensions(bbox)
   for (var i = 0; i < res.dimensions.x; i++) {
     var long = []
     for (var j = 0; j < res.dimensions.y; j++) {
-      var e = gridElement()
-      /* Paint outer edges as having roads. Avoid finds at edges that might be fakes.
-      TODO: Find a better solution! Expand grid compared to bbox and load actual roads? */
-      if (i === 0 || j === 0 || i === res.dimensions.x - 1 || j === res.dimensions.y - 1) {
-        res.countRoadElements++
-        e.hasRoad = 1
+      const e = new GridElement();
+      const point = gridToUtm(res, { x: i, y: j });
+      const point3857 = proj4('EPSG:4326', 'EPSG:3857', point)
+      e.isLand = waters.every(w => {
+        if (w.type === 'Polygon' && booleanPointInPolygon(point3857, w)) {
+          return false;
+        }
+        return true;
+      });
+
+      e.withinBounds = booleanPointInPolygon(point, selectedArea);
+      if (!e.withinBounds || !e.isLand) {
+        res.countExcludedElements++;
+        e.excluded = true;
       }
-      long.push(e)
+      long.push(e);
     }
     res.data.push(long)
   }
@@ -116,23 +137,26 @@ function generateGrid(bbox: BoundingBox): Grid {
 }
 
 function fillRoads(grid: Grid, roads: any[]) {
-  roads.forEach((r: {geom: {coordinates: number [][]} }) => {
-    for (let i = 0; i < r.geom.coordinates.length - 1; i++) {
-      const currPoint = proj4('EPSG:3857', 'EPSG:4326', r.geom.coordinates[i]);
-      const nextPoint = proj4('EPSG:3857', 'EPSG:4326',r.geom.coordinates[i + 1])
+  roads.forEach((r: { coordinates: number[][] }) => {
+    for (let i = 0; i < r.coordinates.length - 1; i++) {
+      const currPoint = proj4('EPSG:3857', 'EPSG:4326', r.coordinates[i]);
+      const nextPoint = proj4('EPSG:3857', 'EPSG:4326', r.coordinates[i + 1])
       const vector = [nextPoint[0] - currPoint[0], nextPoint[1] - currPoint[1]]
       const vectorLength = Math.sqrt(Math.pow(vector[0], 2) + Math.pow(vector[1], 2))
 
       // Paint 1 pixel in between each line point: Go along computed vector and paint every #
-      for (let j = 0.0; j < vectorLength; j += grid.dimensions.increment) {
+      for (let j = 0.0; j < vectorLength; j += 0.5 * grid.dimensions.increment) {
         const element = {
           long: currPoint[0] + j * vector[0] / vectorLength,
           lat: currPoint[1] + j * vector[1] / vectorLength
         }
         const position = utmToGrid(grid, element)
         if (position != null && grid.data[position.x][position.y].hasRoad === 0) { // Point from road might not be within boundaries, as road does not stop at bbox
-          grid.data[position.x][position.y].hasRoad = 1
-          grid.countRoadElements++
+          grid.data[position.x][position.y].hasRoad = 1;
+          if (grid.data[position.x][position.y].isLand && grid.data[position.x][position.y].withinBounds) {
+            grid.countExcludedElements++
+            grid.data[position.x][position.y].excluded = true;
+          }
         }
       }
     }
@@ -140,26 +164,31 @@ function fillRoads(grid: Grid, roads: any[]) {
   return grid
 }
 
-self.onmessage = (e: MessageEvent<MainToWorkerMessage>) => {
-  let grid = generateGrid(e.data.bbox);
+self.onmessage = async (e: MessageEvent<MainToWorkerMessage>) => {
+  let grid = generateGrid(e.data.bbox, e.data.selectedArea, e.data.waters);
   const gridPointsTotal = grid.dimensions.x * grid.dimensions.y
   let iteration = 0;
-  let sentImages = 0
+  let sentImages = 0;
+  let lastImageSent = 0;
   fillRoads(grid, e.data.roads);
 
-  while (gridPointsTotal > grid.countRoadElements && iteration < GRID_MAX_RESOLUTION) {
+  while (gridPointsTotal > grid.countExcludedElements && iteration < GRID_MAX_RESOLUTION) {
     iteration++;
     grid = growRoads(grid, iteration)
-    var density = grid.countRoadElements / gridPointsTotal;
+    var density = grid.countExcludedElements / gridPointsTotal;
     if (density > sentImages * DENSITY_STEP) {
+      // Send one image every 500ms minimum, so that the animation is visible
+      const waitTime = Math.max(0, 500 + lastImageSent - Date.now());
+      await new Promise(r => setTimeout(r, waitTime));
       self.postMessage({
         isFinalResult: false,
-        img: new Blob([gridToPng(grid)], {type: 'image/png'}),
+        img: new Blob([gridToPng(grid)], { type: 'image/png' }),
         coordinates: [],
       });
+      lastImageSent = Date.now();
       sentImages++;
     }
-    console.debug(`iteration #${iteration}, roadElements: ${grid.countRoadElements} / ${gridPointsTotal}`)
+    console.log(`iteration #${iteration}, roadElements: ${grid.countExcludedElements} / ${gridPointsTotal}`)
   }
   if (!grid.furthestAway) {
     console.error("Did not find last colorized point within iteration limit. Error!")
@@ -168,10 +197,10 @@ self.onmessage = (e: MessageEvent<MainToWorkerMessage>) => {
     console.debug(`Found point @${grid.furthestAway.x},${grid.furthestAway.y}`)
     self.postMessage({
       isFinalResult: true,
-      img: new Blob([gridToPng(grid)], {type: 'image/png'}),
+      img: new Blob([gridToPng(grid)], { type: 'image/png' }),
       coordinates: gridToUtm(grid, grid.furthestAway),
     });
   }
 };
 
-export { };
+export { Grid };
