@@ -15,7 +15,7 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
         rectangle: true,
         circle: true, // Workaround disappearing toolbar: Circle is set to true but not displayed, see CSS.
         polyline: false,
-        polygon: true,
+        polygon: false,
         marker: false,
         circlemarker: false,
     });
@@ -54,7 +54,7 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
                 setAllowedControls({
                     ...allowedControls,
                     rectangle: true,
-                    polygon: true,
+                    polygon: false,
                     circle: false,
                 });
             }
