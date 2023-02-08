@@ -1,4 +1,4 @@
-import { PNG } from 'pngjs/browser'; // TODO: import typings as custom one. And/Or PR to typing lib
+import { PNG } from 'pngjs/browser';
 import { Grid } from './WorkerInternalsInterface';
 
 function paintPoint(data: Buffer, x: number, i: number, j: number, color: number) {
