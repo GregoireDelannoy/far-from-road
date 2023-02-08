@@ -147,6 +147,12 @@ function App() {
     setSearchButtonState({ ...searchButtonState, actionable: true, isDone: false, current: true });
   }
 
+  function stateSearching() {
+    setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: true, current: false });
+    setLoadButtonState({ ...loadButtonState, actionable: false, isDone: true, current: false });
+    setSearchButtonState({ ...searchButtonState, actionable: false, isDone: false, current: true });
+  }
+
   function onMapFeaturesChange(features: FeatureCollection<Geometry, GeoJsonProperties>) {
     if (features.features.length) {
       selectedShape.current = features.features[0].geometry;
@@ -179,6 +185,7 @@ function App() {
 
   function onClickSearch(){
     if (selectedShape.current && selectedShape.current.type === 'Polygon') {
+      stateSearching();
       const bbox = geometryToEnlargedBounds(selectedShape.current);
       const worker = new Worker(new URL('./searchFarthestPoint.worker.ts', import.meta.url));
       worker.onmessage = (e: MessageEvent<WorkerToMainMessage>) => {
