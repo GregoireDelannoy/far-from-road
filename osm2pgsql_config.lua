@@ -1,4 +1,6 @@
-local streets = osm2pgsql.define_way_table('streets', {
+-- Runnable with "osm2pgsql --slim -H 127.0.0.1 -d gis2 -U gis2 -W -O flex -S ~/code/far-from-road/osm2pgsql_config.lua /media/gregoire/Storage/france.pbf"
+
+local roads = osm2pgsql.define_way_table('roads', {
     { column = 'id', sql_type = 'serial', create_only = true },
     { column = 'geom',    type = 'linestring' },
 })
@@ -24,7 +26,7 @@ function osm2pgsql.process_way(object)
 
     -- Get drivable roads
     if highway_type then
-        streets:add_row({
+        roads:add_row({
             geom = { create = 'line' }
         })
     end

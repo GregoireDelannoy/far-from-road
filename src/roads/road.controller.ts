@@ -8,6 +8,6 @@ export class RoadController {
 
   @Get('roads')
   async getRoads(@Query() params: GetRoadsDto): Promise<object> {
-    return await this.roadService.getRoads(params);
+    return (await this.roadService.getRoads(params)).map(r => r.geom);
   }
 }

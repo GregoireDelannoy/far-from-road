@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { Raw } from 'typeorm';
-import { GetRoadsDto } from './GetRoads.dto';
+import { GetWatersDto } from './GetWaters.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Road } from './road.entity';
+import { Waters } from './waters.entity';
 
 @Injectable()
-export class RoadService {
+export class WatersService {
   constructor(
-    @InjectRepository(Road)
-    private readonly roadsRepository: Repository<Road>,
+    @InjectRepository(Waters)
+    private readonly watersRepository: Repository<Waters>,
   ) {}
 
-  async getRoads(params: GetRoadsDto): Promise<Road[]> {
-    return await this.roadsRepository.findBy({
+  async getWaters(params: GetWatersDto): Promise<Waters[]> {
+    return await this.watersRepository.findBy({
       geom: Raw(
         (alias) =>
           `ST_Intersects(ST_Transform(ST_MakeEnvelope(:longMin, :latMin, :longMax, :latMax, 4326),3857), ${alias})`,

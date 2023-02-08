@@ -4,6 +4,7 @@ import { DatabaseModule } from './database.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { RoadsModule } from './roads/roads.module';
+import { WatersModule } from './waters/waters.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { RoadsModule } from './roads/roads.module';
       renderPath: 'index.html',
     }),
     RoadsModule,
+    WatersModule,
   ],
 })
 export class AppModule {}
