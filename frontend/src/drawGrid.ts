@@ -26,7 +26,7 @@ function paintPoint(data: Buffer, x: number, i: number, j: number, color: Color 
     data[idx] = colorRgb[0]
     data[idx + 1] = colorRgb[1]
     data[idx + 2] = colorRgb[2]
-    data[idx + 3] = 255
+    data[idx + 3] = 196
 }
 
 function gridToPng(grid: Grid) {

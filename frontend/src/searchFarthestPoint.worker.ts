@@ -1,13 +1,14 @@
 /* eslint-disable no-restricted-globals */
-import { Geometry, Polygon } from 'geojson';
+import { BBox, Geometry, Polygon } from 'geojson';
 import proj4 from 'proj4';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
+import bbox from '@turf/bbox';
 
 import { BoundingBox, MainToWorkerMessage } from './WorkerMessages';
 import { gridToPng } from './drawGrid';
 
-const GRID_MAX_RESOLUTION = 64.0
-const DENSITY_STEP = 0.001 // Output one image every % of density
+const GRID_MAX_RESOLUTION = 512.0
+const DENSITY_STEP = 0.05 // Output one image every % of density
 
 
 class GridElement {
@@ -107,6 +108,10 @@ function growRoads(grid: Grid, iteration: number) {
   return grid
 }
 
+function pointInBbox(point: number[], bbox: BBox){
+  return point[0] > bbox[0] && point[0] < bbox[2] && point[1] > bbox[1] && point[1] < bbox[3];
+}
+
 function generateGrid(bbox: BoundingBox, selectedArea: Polygon, waters: Geometry[]): Grid {
   let res = new Grid();
   res.bbox = bbox
@@ -116,15 +121,16 @@ function generateGrid(bbox: BoundingBox, selectedArea: Polygon, waters: Geometry
     for (var j = 0; j < res.dimensions.y; j++) {
       const e = new GridElement();
       const point = gridToUtm(res, { x: i, y: j });
-      const point3857 = proj4('EPSG:4326', 'EPSG:3857', point)
-      e.isLand = waters.every(w => {
-        if (w.type === 'Polygon' && booleanPointInPolygon(point3857, w)) {
-          return false;
-        }
-        return true;
-      });
-
       e.withinBounds = booleanPointInPolygon(point, selectedArea);
+      if (e.withinBounds) {
+        const point3857 = proj4('EPSG:4326', 'EPSG:3857', point)
+        e.isLand = waters.every(w => {
+          if (w.type === 'Polygon' && w.bbox && pointInBbox(point3857, w.bbox) && booleanPointInPolygon(point3857, w)) {
+            return false;
+          }
+          return true;
+        });
+      }
       if (!e.withinBounds || !e.isLand) {
         res.countExcludedElements++;
         e.excluded = true;
@@ -145,7 +151,7 @@ function fillRoads(grid: Grid, roads: any[]) {
       const vectorLength = Math.sqrt(Math.pow(vector[0], 2) + Math.pow(vector[1], 2))
 
       // Paint 1 pixel in between each line point: Go along computed vector and paint every #
-      for (let j = 0.0; j < vectorLength; j += 0.5 * grid.dimensions.increment) {
+      for (let j = 0.0; j < vectorLength; j += grid.dimensions.increment) {
         const element = {
           long: currPoint[0] + j * vector[0] / vectorLength,
           lat: currPoint[1] + j * vector[1] / vectorLength
@@ -165,6 +171,9 @@ function fillRoads(grid: Grid, roads: any[]) {
 }
 
 self.onmessage = async (e: MessageEvent<MainToWorkerMessage>) => {
+  e.data.waters.forEach(w => {
+    w.bbox = bbox(w);
+  });
   let grid = generateGrid(e.data.bbox, e.data.selectedArea, e.data.waters);
   const gridPointsTotal = grid.dimensions.x * grid.dimensions.y
   let iteration = 0;
@@ -188,7 +197,7 @@ self.onmessage = async (e: MessageEvent<MainToWorkerMessage>) => {
       lastImageSent = Date.now();
       sentImages++;
     }
-    console.log(`iteration #${iteration}, roadElements: ${grid.countExcludedElements} / ${gridPointsTotal}`)
+    console.debug(`iteration #${iteration}, roadElements: ${grid.countExcludedElements} / ${gridPointsTotal}`)
   }
   if (!grid.furthestAway) {
     console.error("Did not find last colorized point within iteration limit. Error!")

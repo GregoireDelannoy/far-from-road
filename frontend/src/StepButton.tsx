@@ -7,7 +7,7 @@ interface StepButtonProps {
 }
 
 function StepButton({ actionable, isDone, current, text, onClick }: StepButtonProps) {
-  let classes = ['text-white', 'font-bold', 'py-2', 'px-4', 'rounded', 'min-w-[96px]', 'min-h-[48px]', 'border'];
+  let classes = ['text-white', 'font-bold', 'py-2', 'px-4', 'rounded', 'border'];
   let disabled = null;
 
   if (isDone) {
