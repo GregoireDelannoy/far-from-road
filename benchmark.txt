@@ -1,7 +1,0 @@
-Circles, 128*128 => 50s to execute
-Pixels with fillRect, 128*128 => 18ms to execute
-Pixels with fillRect, 4096*4096 => 2700ms to create grid, 4400 to draw
-Pixels with fillRect, 4096*4096 => 2700ms to create grid, 4400 to draw
-Pixels with fillRect, 1024*1024 => 240ms to create grid, 250 to draw
-1024*1024, GIF = 12 iterations 23726ms
-1024*1024, search but no GIF: 193ms
