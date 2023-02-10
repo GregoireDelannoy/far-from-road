@@ -13,12 +13,12 @@ export class RoadService {
   ) {}
 
   async getRoads(params: GetRoadsDto): Promise<Road[]> {
-    return await this.roadsRepository.findBy({
-      geom: Raw(
-        (alias) =>
-          `ST_Intersects(ST_Transform(ST_MakeEnvelope(:longMin, :latMin, :longMax, :latMax, 4326),3857), ${alias})`,
-        params,
-      ),
-    });
+    return await this.roadsRepository
+      .createQueryBuilder('roads')
+      .select(['roads.way_id', 'roads.geom'])
+      .where('ST_Intersects(ST_Transform(ST_MakeEnvelope(:longMin, :latMin, :longMax, :latMax, 4326),3857), roads.geom)', params)
+      .orderBy('ST_Length(roads.geom)')
+      .limit(4096)
+      .getMany()
   }
 }
