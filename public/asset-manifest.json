@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "/static/css/main.643a6229.css",
+    "main.js": "/static/js/main.aa2b452e.js",
+    "static/js/504.387553fc.chunk.js": "/static/js/504.387553fc.chunk.js",
+    "static/js/18.ddacdc00.chunk.js": "/static/js/18.ddacdc00.chunk.js",
+    "static/media/libre-franklin-extra-light.ttf": "/static/media/libre-franklin-extra-light.d21cfca8c4b32bab1fe8.ttf",
+    "static/media/logo.svg": "/static/media/logo.228e33870bfeae37e5d6259aedd4ee0c.svg",
+    "index.html": "/index.html",
+    "main.643a6229.css.map": "/static/css/main.643a6229.css.map",
+    "main.aa2b452e.js.map": "/static/js/main.aa2b452e.js.map",
+    "504.387553fc.chunk.js.map": "/static/js/504.387553fc.chunk.js.map",
+    "18.ddacdc00.chunk.js.map": "/static/js/18.ddacdc00.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.643a6229.css",
+    "static/js/main.aa2b452e.js"
+  ]
+}
