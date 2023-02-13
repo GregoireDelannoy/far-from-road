@@ -17,8 +17,8 @@ export class RoadService {
       .createQueryBuilder('roads')
       .select(['roads.way_id', 'roads.geom'])
       .where('ST_Intersects(ST_Transform(ST_MakeEnvelope(:longMin, :latMin, :longMax, :latMax, 4326),3857), roads.geom)', params)
-      .orderBy('ST_Length(roads.geom)')
-      .limit(4096)
+      .orderBy('ST_Length(roads.geom)', 'DESC')
+      .limit(2048)
       .getMany()
   }
 }
