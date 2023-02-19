@@ -11,7 +11,7 @@ import { WatersModule } from './waters/waters.module';
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'public'),
+      rootPath: join(__dirname, '..', 'frontend', 'build'),
       renderPath: 'index.html',
     }),
     RoadsModule,
