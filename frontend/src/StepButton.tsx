@@ -36,3 +36,4 @@ function StepButton({ actionable, isDone, current, text, onClick }: StepButtonPr
 }
 
 export { StepButton };
+export type { StepButtonProps };

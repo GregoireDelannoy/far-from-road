@@ -1,12 +1,21 @@
-import type { FeatureCollection, GeoJsonProperties, Geometry, Polygon } from 'geojson';
+import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import { useState, useRef } from 'react';
 import { BarLoader } from 'react-spinners';
 
 import logo from './img/logo.svg';
-import { BoundingBox, WorkerToMainMessage } from './WorkerMessages';
+import { WorkerToMainMessage } from './WorkerMessages';
 import { Map } from './Map';
 import type { MapMarkerProps, ImageOverlayProps } from './Map';
-import { StepButton } from './StepButton';
+import { geometryToBbox, geometryToEnlargedBbox, isValidHttpUrl } from './helpers';
+import ButtonSection from './ButtonSection';
+
+enum AppState {
+  SelectShapes, // Nothing is selected on map, user has to click in leaflet to draw
+  LoadFeatures, // A polygon is drawn, enable button to download features
+  WaitFeatures, // Features are being downloaded. Only user action = remove polygon
+  Search, // Features are downloaded, search button is enabled
+  WaitSearch, // Search and flood fill display are ongoing. Only user action = remove polygon
+}
 
 function AppHeader() {
   return (
@@ -21,90 +30,47 @@ function AppHeader() {
   );
 }
 
-function geometryToBbox(geom: Polygon): BoundingBox {
-  const long = geom.coordinates[0].map(x => x[0]);
-  const lat = geom.coordinates[0].map(x => x[1]);
-  return {
-    latMin: Math.min(...lat),
-    latMax: Math.max(...lat),
-    longMin: Math.min(...long),
-    longMax: Math.max(...long),
-  };
-}
-
-function geometryToEnlargedBbox(geom: Polygon): BoundingBox {
-  const bounds = geometryToBbox(geom);
-  const width = bounds.longMax - bounds.longMin;
-  const height = bounds.latMax - bounds.latMin;
-
-  return {
-    latMin: bounds.latMin - height / 2,
-    latMax: bounds.latMax + height / 2,
-    longMin: bounds.longMin - width / 2,
-    longMax: bounds.longMax + width / 2,
-  };
-}
-
 function App() {
-  const [shapesButtonState, setShapesButtonState] = useState({ actionable: false, isDone: false, current: true, text: '1-Draw on map', onClick: () => { } });
-  const [loadButtonState, setLoadButtonState] = useState({ actionable: false, isDone: false, current: false, text: '2-Load geo-features', onClick: onClickLoadFeatures });
-  const [searchButtonState, setSearchButtonState] = useState({ actionable: false, isDone: false, current: false, text: '3-Search!', onClick: onClickSearch });
+  const [appState, setAppState] = useState<AppState>(AppState.SelectShapes);
   const [loading, setLoading] = useState(false);
   const selectedShape = useRef<Geometry>();
   const roads = useRef<Geometry[]>([]);
   const waters = useRef<Geometry[]>([]);
-  const [mapMarker, setMapMarker] = useState<MapMarkerProps>({
-    position: [],
-    content: '',
-  });
-  const [imageOverlay, setImageOverlay] = useState<ImageOverlayProps>({
-    url: '',
-    topLeftCorner: [],
-    bottomRightCorner: [],
-  });
+  const [mapMarker, setMapMarker] = useState<MapMarkerProps>({ position: [], content: '' });
+  const [imageOverlay, setImageOverlay] = useState<ImageOverlayProps>({ url: '', topLeftCorner: [], bottomRightCorner: [] });
   const API_URL = process.env.REACT_APP_API_URL;
 
-  if (!API_URL) {
+  if (!API_URL || !isValidHttpUrl(API_URL)) {
     console.error('false API_URL environnement variable');
   }
 
   function stateSelectShapes() {
-    setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: false, current: true });
-    setLoadButtonState({ ...loadButtonState, actionable: false, isDone: false, current: false });
-    setSearchButtonState({ ...searchButtonState, actionable: false, isDone: false, current: false });
+    setAppState(AppState.SelectShapes);
     setMapMarker({ position: [], content: '' });
     waters.current = [];
     roads.current = [];
   }
 
   function stateLoadFeatures() {
-    setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: true, current: false });
-    setLoadButtonState({ ...loadButtonState, actionable: true, isDone: false, current: true });
-    setSearchButtonState({ ...searchButtonState, actionable: false, isDone: false, current: false });
+    setAppState(AppState.LoadFeatures);
     waters.current = [];
     roads.current = [];
   }
 
   function stateWaitFeatures() {
-    setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: true, current: false });
-    setLoadButtonState({ ...loadButtonState, actionable: false, isDone: false, current: true });
-    setSearchButtonState({ ...searchButtonState, actionable: false, isDone: false, current: false });
+    setAppState(AppState.WaitFeatures);
     waters.current = [];
     roads.current = [];
     setLoading(true);
   }
 
   function stateSearch() {
-    setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: true, current: false });
-    setLoadButtonState({ ...loadButtonState, actionable: false, isDone: true, current: false });
-    setSearchButtonState({ ...searchButtonState, actionable: true, isDone: false, current: true });
+    setAppState(AppState.Search);
     setLoading(false);
   }
 
   function stateSearching() {
-    setShapesButtonState({ ...shapesButtonState, actionable: false, isDone: true, current: false });
-    setLoadButtonState({ ...loadButtonState, actionable: false, isDone: true, current: false });
-    setSearchButtonState({ ...searchButtonState, actionable: false, isDone: false, current: true });
+    setAppState(AppState.WaitSearch);
     setLoading(true);
   }
 
@@ -200,13 +166,12 @@ function App() {
       </div>
       <div className='flex w-screen'>
         <div className='flex m-auto my-2 gap-2 flex-wrap'>
-          <StepButton {...shapesButtonState} />
-          <StepButton {...loadButtonState} />
-          <StepButton {...searchButtonState} />
+          <ButtonSection onClickLoadFeatures={onClickLoadFeatures} onClickSearch={onClickSearch} appState={appState} />
         </div>
       </div>
     </>
   );
 }
 
+export { AppState };
 export default App;

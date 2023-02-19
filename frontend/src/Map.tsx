@@ -69,7 +69,7 @@ function Map({ onFeaturesChange, imageOverlay, mapMarker, waters }: MapProps) {
             center={[44.911518, 6.36352]} // Somewhere in the french alps
             zoom={9}
             zoomControl={true}
-            dragging={!Browser.mobile} // Disable one finger dragging on map for mobile devices. TODO: test on real device
+            dragging={!Browser.mobile} // Disable one finger dragging on map for mobile devices.
             maxBounds={latLngBounds(latLng(52, -5), latLng(40, 11))} // Bounds should match DB known features
             minZoom={6}
             maxZoom={13}

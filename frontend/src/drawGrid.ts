@@ -1,4 +1,5 @@
 import { PNG } from 'pngjs/browser';
+
 import { Grid } from './searchFarthestPoint.worker';
 
 enum Color {
