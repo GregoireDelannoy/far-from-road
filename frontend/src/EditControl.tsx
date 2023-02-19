@@ -65,7 +65,7 @@ export default function EditControlFC({ geojson, setGeojson }: Props) {
     return (
         <FeatureGroup ref={ref}>
             {<EditControl
-                position="topright"
+                position='topright'
                 onEdited={handleChange}
                 onCreated={handleChange}
                 onDeleted={handleChange}

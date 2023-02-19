@@ -32,7 +32,7 @@ function StepButton({ actionable, isDone, current, text, onClick }: StepButtonPr
     <button onClick={onClick} className={classes.join(' ')} disabled={disabled}>
       {text}
     </button>
-  )
+  );
 }
 
-export {StepButton};
+export { StepButton };

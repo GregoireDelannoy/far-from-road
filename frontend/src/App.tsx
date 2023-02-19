@@ -10,7 +10,7 @@ import { StepButton } from './StepButton';
 
 function AppHeader() {
   return (
-    <div className="flex w-screen">
+    <div className='flex w-screen'>
       <div className='m-auto grid grid-cols-2 gap-4 max-w-3xl'>
         <img className='max-h-[4rem] max-w-[30vw]' src={logo} alt='Logo' />
         <div className='flex justify-center items-center'>
@@ -22,8 +22,8 @@ function AppHeader() {
 }
 
 function geometryToBbox(geom: Polygon): BoundingBox {
-  const long = geom.coordinates[0].map(x => x[0])
-  const lat = geom.coordinates[0].map(x => x[1])
+  const long = geom.coordinates[0].map(x => x[0]);
+  const lat = geom.coordinates[0].map(x => x[1]);
   return {
     latMin: Math.min(...lat),
     latMax: Math.max(...lat),
@@ -42,13 +42,13 @@ function geometryToEnlargedBbox(geom: Polygon): BoundingBox {
     latMax: bounds.latMax + height / 2,
     longMin: bounds.longMin - width / 2,
     longMax: bounds.longMax + width / 2,
-  }
+  };
 }
 
 function App() {
-  const [shapesButtonState, setShapesButtonState] = useState({ actionable: false, isDone: false, current: true, text: '1-Draw on map', onClick: () => { } })
-  const [loadButtonState, setLoadButtonState] = useState({ actionable: false, isDone: false, current: false, text: '2-Load geo-features', onClick: onClickLoadFeatures })
-  const [searchButtonState, setSearchButtonState] = useState({ actionable: false, isDone: false, current: false, text: '3-Search!', onClick: onClickSearch })
+  const [shapesButtonState, setShapesButtonState] = useState({ actionable: false, isDone: false, current: true, text: '1-Draw on map', onClick: () => { } });
+  const [loadButtonState, setLoadButtonState] = useState({ actionable: false, isDone: false, current: false, text: '2-Load geo-features', onClick: onClickLoadFeatures });
+  const [searchButtonState, setSearchButtonState] = useState({ actionable: false, isDone: false, current: false, text: '3-Search!', onClick: onClickSearch });
   const [loading, setLoading] = useState(false);
   const selectedShape = useRef<Geometry>();
   const roads = useRef<Geometry[]>([]);
@@ -65,7 +65,7 @@ function App() {
   const API_URL = process.env.REACT_APP_API_URL;
 
   if (!API_URL) {
-    console.error("false API_URL environnement variable");
+    console.error('false API_URL environnement variable');
   }
 
   function stateSelectShapes() {
@@ -136,7 +136,7 @@ function App() {
           },
             (error) => {
               console.error(error);
-              alert('There has been an error downloading roads. Check console.')
+              alert('There has been an error downloading roads. Check console.');
             }),
         fetch(`${API_URL}/waters?${watersQueryParameters}`)
           .then(res => res.json())
@@ -145,11 +145,11 @@ function App() {
           },
             (error) => {
               console.error(error);
-              alert('There has been an error downloading waters. Check console.')
+              alert('There has been an error downloading waters. Check console.');
             })
       ]).then(() => {
         stateSearch();
-      })
+      });
     }
   }
 
@@ -190,15 +190,15 @@ function App() {
   return (
     <>
       <AppHeader />
-      <div className="flex w-screen">
+      <div className='flex w-screen'>
         <div className='flex m-auto my-0.5'>
-          <BarLoader className='display-block' loading={loading} width={'50vw'} aria-label="Loading Spinner" />
+          <BarLoader className='display-block' loading={loading} width={'50vw'} aria-label='Loading Spinner' />
         </div>
       </div>
       <div className='h-[80vh] mx-[0.25rem]'>
         <Map onFeaturesChange={onMapFeaturesChange} imageOverlay={imageOverlay} mapMarker={mapMarker} waters={waters.current} />
       </div>
-      <div className="flex w-screen">
+      <div className='flex w-screen'>
         <div className='flex m-auto my-2 gap-2 flex-wrap'>
           <StepButton {...shapesButtonState} />
           <StepButton {...loadButtonState} />
@@ -206,7 +206,7 @@ function App() {
         </div>
       </div>
     </>
-  )
+  );
 }
 
 export default App;

@@ -1,6 +1,6 @@
 import { ReactElement, useState } from 'react';
 import { Browser, latLngBounds, latLng } from 'leaflet';
-import { MapContainer, TileLayer, Marker, Popup, ImageOverlay, LayerGroup, Polygon } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, ImageOverlay, LayerGroup, Polygon } from 'react-leaflet';
 import { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson';
 import proj4 from 'proj4';
 
@@ -38,7 +38,7 @@ function Map({ onFeaturesChange, imageOverlay, mapMarker, waters }: MapProps) {
 
     let overlay = <span />;
     if (imageOverlay.url) {
-        overlay = <ImageOverlay url={imageOverlay.url} bounds={latLngBounds(latLng(imageOverlay.topLeftCorner[0], imageOverlay.topLeftCorner[1]), latLng(imageOverlay.bottomRightCorner[0], imageOverlay.bottomRightCorner[1]))} />
+        overlay = <ImageOverlay url={imageOverlay.url} bounds={latLngBounds(latLng(imageOverlay.topLeftCorner[0], imageOverlay.topLeftCorner[1]), latLng(imageOverlay.bottomRightCorner[0], imageOverlay.bottomRightCorner[1]))} />;
     }
 
     let marker = <span />;
@@ -47,7 +47,7 @@ function Map({ onFeaturesChange, imageOverlay, mapMarker, waters }: MapProps) {
             <Popup>
                 <span>{mapMarker.content}</span>
             </Popup>
-        </Marker>
+        </Marker>;
     }
 
     let watersPolygons: ReactElement[] = [];
@@ -60,7 +60,7 @@ function Map({ onFeaturesChange, imageOverlay, mapMarker, waters }: MapProps) {
                     let pos = proj4('EPSG:3857', 'EPSG:4326', c);
                     return latLng(pos[1], pos[0]);
                 })}
-            />)
+            />);
         }
     });
 
@@ -76,7 +76,7 @@ function Map({ onFeaturesChange, imageOverlay, mapMarker, waters }: MapProps) {
         >
             <TileLayer
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
+                url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
                 noWrap={true}
             />
             <LayerGroup>

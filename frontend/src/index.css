@@ -5,12 +5,12 @@
 
 /* Match logo font */
 @font-face {
-  font-family: "Light";
-  src: url("./fonts/libre-franklin-extra-light.ttf") format("truetype");
+  font-family: 'Light';
+  src: url('./fonts/libre-franklin-extra-light.ttf') format('truetype');
 }
 
 * {
-  font-family: "Light";
+  font-family: 'Light';
 }
 
 .leaflet-container {
