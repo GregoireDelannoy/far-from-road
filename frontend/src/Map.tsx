@@ -75,8 +75,8 @@ function Map({ onFeaturesChange, imageOverlay, mapMarker, waters }: MapProps) {
             maxZoom={13}
         >
             <TileLayer
-                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
+                attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+                url='https://{s}.tile.osm.org/{z}/{x}/{y}.png'
                 noWrap={true}
             />
             <LayerGroup>
